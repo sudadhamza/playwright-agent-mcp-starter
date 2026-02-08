@@ -3,114 +3,99 @@ import { test, expect } from '../fixtures/base.fixture';
 /**
  * API Health Check Tests - @api
  *
- * These tests verify API endpoints are reachable and return expected responses.
- * They use Playwright's built-in APIRequestContext, which is the recommended
- * approach for API testing within the Playwright ecosystem.
+ * These tests verify basic API testing patterns using httpbin.org,
+ * a freely available HTTP testing service. They serve as:
+ *   1. Proof that the framework works out of the box
+ *   2. Examples of common API test patterns to adapt to your own API
  *
- * Why use Playwright for API tests?
- *   - Same test runner, same assertions, same reporting
- *   - Easily mix UI and API tests in the same suite
- *   - No need for separate tools (Postman, Rest Client, etc.)
- *   - Full TypeScript support with type checking
- *
- * IMPORTANT: Replace the example endpoints below with your real API endpoints.
- * The paths used here (/api/health, /api/nonexistent) are generic placeholders.
+ * When you're ready to test your own API:
+ *   1. Set API_BASE_URL in your .env file
+ *   2. Replace the httpbin.org endpoints below with your real endpoints
  *
  * @see https://playwright.dev/docs/api-testing
+ * @see https://httpbin.org — public HTTP testing service
  */
 
 test.describe('API Health Check Tests @api', () => {
 
-  test('GET /api/health returns 200', async ({ apiContext }) => {
-    // Send a GET request to the health check endpoint.
-    // Replace '/api/health' with your actual health check path.
-    const response = await apiContext.get('/api/health');
+  test('GET request returns 200 @smoke', async ({ apiContext }) => {
+    // Send a GET request and verify a successful response.
+    // httpbin.org/get echoes back the request details.
+    //
+    // Adapt: Replace with your health check endpoint, e.g. '/api/health'
+    const response = await apiContext.get('/get');
 
-    // Assert the response status is 200 (OK)
     expect(response.status()).toBe(200);
-
-    // Assert the response is successful (status in 200-299 range)
     expect(response.ok()).toBeTruthy();
   });
 
-  test('GET /api/nonexistent returns 404', async ({ apiContext }) => {
-    // Negative test: verify that requesting a non-existent endpoint
-    // returns an appropriate error status code.
-    // This ensures the API handles unknown routes gracefully.
-    const response = await apiContext.get('/api/nonexistent');
+  test('GET /status/:code returns expected status', async ({ apiContext }) => {
+    // Negative test: verify that the framework correctly captures
+    // non-200 status codes.
+    //
+    // Adapt: Replace with a known 404 route on your API, e.g. '/api/nonexistent'
+    const response = await apiContext.get('/status/404');
 
-    // Assert the response status is 404 (Not Found)
     expect(response.status()).toBe(404);
-
-    // Assert the response is NOT successful
     expect(response.ok()).toBeFalsy();
   });
 
   test('response has valid JSON structure', async ({ apiContext }) => {
     // Verify that the API returns well-formed JSON with the correct
     // Content-Type header. This is a baseline contract test.
-
-    // Replace '/api/health' with your actual endpoint
-    const response = await apiContext.get('/api/health');
+    //
+    // Adapt: Replace with your actual JSON endpoint
+    const response = await apiContext.get('/get');
 
     // Check Content-Type header includes 'application/json'
     const contentType = response.headers()['content-type'] ?? '';
     expect(contentType).toContain('application/json');
 
-    // Parse the response body as JSON
-    // This will throw if the response is not valid JSON
+    // Parse the response body — this will throw if not valid JSON
     const body = await response.json();
 
     // Assert the body is a non-null object
-    // Replace this with your actual expected response structure, e.g.:
-    //   expect(body).toHaveProperty('status');
-    //   expect(body.status).toBe('healthy');
     expect(body).toBeDefined();
     expect(typeof body).toBe('object');
     expect(body).not.toBeNull();
+
+    // httpbin.org/get returns { url, headers, origin, args }
+    expect(body).toHaveProperty('url');
+    expect(body).toHaveProperty('headers');
   });
 
-  test('health endpoint responds within acceptable time', async ({ apiContext }) => {
-    // Performance baseline: verify the health endpoint responds quickly.
-    // Adjust the threshold (1000ms) based on your SLA requirements.
+  test('API responds within acceptable time', async ({ apiContext }) => {
+    // Performance baseline: verify the endpoint responds quickly.
+    // Adjust the threshold based on your SLA requirements.
+    //
+    // Adapt: Replace with your health check or critical endpoint
     const startTime = Date.now();
 
-    const response = await apiContext.get('/api/health');
+    const response = await apiContext.get('/get');
 
     const duration = Date.now() - startTime;
 
-    // Assert the response was received within 1 second
-    // Adjust this threshold based on your application's performance requirements
-    expect(duration).toBeLessThan(1000);
+    // Assert response was received within 5 seconds (generous for a public API)
+    // Tighten this threshold for your own API (e.g., 500ms for a health check)
+    expect(duration).toBeLessThan(5000);
     expect(response.ok()).toBeTruthy();
   });
 
-  test('API returns proper error format for bad request', async ({ apiContext }) => {
-    // Verify that the API returns a structured error response
-    // when given invalid input. Replace the endpoint and payload
-    // with a real example from your API.
+  test('POST with JSON body returns expected data', async ({ apiContext }) => {
+    // Verify that the framework can send JSON payloads and parse responses.
+    // httpbin.org/post echoes back whatever you send.
+    //
+    // Adapt: Replace with a real POST endpoint from your API
+    const payload = { name: 'test-user', email: 'test@example.com' };
 
-    // Example: POST to an endpoint with an invalid/empty body
-    // Replace '/api/resource' with your actual endpoint
-    const response = await apiContext.post('/api/resource', {
-      data: {},
+    const response = await apiContext.post('/post', {
+      data: payload,
     });
 
-    // APIs typically return 400 (Bad Request) or 422 (Unprocessable Entity)
-    // for validation errors. Adjust the expected status to match your API.
-    expect(response.status()).toBeGreaterThanOrEqual(400);
-    expect(response.status()).toBeLessThan(500);
+    expect(response.status()).toBe(200);
 
-    // Verify the error response is JSON
-    const contentType = response.headers()['content-type'] ?? '';
-    if (contentType.includes('application/json')) {
-      const body = await response.json();
-      expect(body).toBeDefined();
-
-      // Common error response patterns - uncomment the one that matches your API:
-      // expect(body).toHaveProperty('error');
-      // expect(body).toHaveProperty('message');
-      // expect(body).toHaveProperty('errors');
-    }
+    const body = await response.json();
+    expect(body).toHaveProperty('json');
+    expect(body.json).toEqual(payload);
   });
 });

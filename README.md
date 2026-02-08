@@ -37,7 +37,7 @@ npm install
 
 # 3. Set up environment
 cp .env.example .env
-# Edit .env → set BASE_URL to your app (defaults to https://example.com)
+# Edit .env → set BASE_URL to your app (defaults to http://example.com)
 
 # 4. Set up MCP (optional, for Claude Code users)
 cp .mcp.json.example .mcp.json
@@ -55,7 +55,7 @@ npx playwright test tests/api/health.spec.ts --project=chromium
 npm run report
 ```
 
-> **Note:** The default `BASE_URL` is `https://example.com` — the smoke tests run against this public URL out of the box. Change it in `.env` to point to your application.
+> **Note:** The defaults are `http://example.com` (UI) and `https://httpbin.org` (API) — all 10 tests pass out of the box against these public URLs. Change them in `.env` to point to your application.
 
 ---
 

@@ -75,9 +75,10 @@ export const test = base.extend<CustomFixtures>({
   apiContext: async ({ playwright }, use) => {
     // Create a new API context with the API base URL
     // Falls back to BASE_URL if API_BASE_URL is not set
+    // Default to httpbin.org — a public HTTP testing service that always works.
+    // Set API_BASE_URL in your .env to point to your own API.
     const apiBaseUrl = process.env.API_BASE_URL
-      || process.env.BASE_URL
-      || 'https://api.example.com';
+      || 'https://httpbin.org';
 
     const context = await playwright.request.newContext({
       baseURL: apiBaseUrl,

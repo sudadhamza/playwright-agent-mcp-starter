@@ -52,7 +52,7 @@ export default defineConfig({
   /* Shared settings applied to all projects below */
   use: {
     /* Base URL for navigation actions like page.goto('/') */
-    baseURL: process.env.BASE_URL || 'https://example.com',
+    baseURL: process.env.BASE_URL || 'http://example.com',
 
     /* Capture trace on first retry to help debug flaky tests */
     trace: 'on-first-retry',

@@ -50,7 +50,7 @@ function warnIfMissing(varName: string, defaultValue: string): void {
  *   // Returns: 'https://your-app.com' (from .env) or 'https://example.com' (default)
  */
 export function getBaseUrl(): string {
-  const defaultValue = 'https://example.com';
+  const defaultValue = 'http://example.com';
   warnIfMissing('BASE_URL', defaultValue);
   return process.env.BASE_URL || defaultValue;
 }
@@ -68,7 +68,7 @@ export function getBaseUrl(): string {
  *   // Returns: 'https://api.your-app.com' (from .env) or 'https://api.example.com' (default)
  */
 export function getApiBaseUrl(): string {
-  const defaultValue = 'https://api.example.com';
+  const defaultValue = 'https://httpbin.org';
   warnIfMissing('API_BASE_URL', defaultValue);
   return process.env.API_BASE_URL || defaultValue;
 }
