@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"],
+      "env": {}
+    },
+    "playwright-test": {
+      "command": "npx",
+      "args": ["@playwright/test@latest", "--mcp"],
+      "env": {}
+    }
+  }
+}
