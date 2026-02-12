@@ -115,9 +115,11 @@ setup → chromium, firefox, webkit (parallel)
                                         api (independent, no browser)
 ```
 
-- **setup** — Authenticates once, saves browser state to `storageState`
+- **setup** — Authenticates once, saves browser state to `.auth/state.json`
 - **chromium/firefox/webkit** — UI tests that load the saved auth state (no login per test)
 - **api** — Runs against `tests/api/` with no browser — pure HTTP requests
+
+Auth state is cached between runs — if cookies are still valid, login is skipped (~96ms instead of ~1.7s). State is stored in `.auth/` (outside `test-results/`) so Playwright doesn't wipe it.
 
 ### Utilities (barrel import)
 

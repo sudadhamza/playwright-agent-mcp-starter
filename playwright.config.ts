@@ -25,7 +25,8 @@ import { Timeouts } from './utils';
  * @see https://playwright.dev/docs/test-configuration
  */
 
-const AUTH_STATE_PATH = 'test-results/.auth/state.json';
+/** Stored outside outputDir so Playwright doesn't wipe it between runs. */
+const AUTH_STATE_PATH = '.auth/state.json';
 
 export default defineConfig({
   /* Directory where test files are located */

@@ -1,4 +1,6 @@
 import { test as setup } from '@playwright/test';
+import fs from 'node:fs';
+import path from 'node:path';
 
 /**
  * Authentication Setup
@@ -7,10 +9,9 @@ import { test as setup } from '@playwright/test';
  * It authenticates once and saves the browser state (cookies, localStorage)
  * to a JSON file that other projects reuse via storageState.
  *
- * Benefits over globalSetup:
- *   - Appears in the HTML report with traces
- *   - Can use Playwright fixtures (page, context, etc.)
- *   - Retries work if auth is flaky
+ * Cache logic:
+ *   - If state.json exists and cookies are not expired → skip login (fast)
+ *   - If state.json is missing or cookies expired → login and save fresh state
  *
  * How to use:
  *   1. Replace the placeholder login steps below with your app's login flow
@@ -20,9 +21,57 @@ import { test as setup } from '@playwright/test';
  * @see https://playwright.dev/docs/auth
  */
 
-const AUTH_STATE_PATH = 'test-results/.auth/state.json';
+/** Stored outside outputDir so Playwright doesn't wipe it between runs. */
+const AUTH_STATE_PATH = '.auth/state.json';
+
+/**
+ * Check if the cached auth state is still valid.
+ *
+ * Reads state.json and checks every cookie's `expires` field.
+ * Returns true only if the file exists AND all cookies are still valid.
+ */
+function isAuthStateValid(): boolean {
+  const fullPath = path.resolve(AUTH_STATE_PATH);
+
+  if (!fs.existsSync(fullPath)) {
+    return false;
+  }
+
+  try {
+    const raw = fs.readFileSync(fullPath, 'utf-8');
+    const state = JSON.parse(raw);
+
+    // No cookies at all — treat as invalid (fresh placeholder file)
+    if (!state.cookies || state.cookies.length === 0) {
+      return false;
+    }
+
+    const now = Date.now() / 1000; // cookies use Unix seconds
+
+    // Check if any cookie has expired
+    const hasExpired = state.cookies.some(
+      (cookie: { expires: number }) =>
+        cookie.expires > 0 && cookie.expires < now,
+    );
+
+    return !hasExpired;
+  } catch {
+    // Corrupt file — re-authenticate
+    return false;
+  }
+}
 
 setup('authenticate', async ({ page }) => {
+  // Skip login if we already have a valid cached session
+  if (isAuthStateValid()) {
+    // eslint-disable-next-line no-console
+    console.log('[auth] Reusing cached session — cookies still valid.');
+    return;
+  }
+
+  // eslint-disable-next-line no-console
+  console.log('[auth] No valid session found — authenticating...');
+
   // ----------------------------------------------------------------
   // Replace the steps below with your application's login flow.
   //
